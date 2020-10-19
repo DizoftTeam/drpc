@@ -12,8 +12,24 @@ Coming soon
 drpcclient -url='http://localhost:8089' -method='version' -params='{}' -id=1
 ```
 
-> TODO: in progress
+### TODO
+
+* Отправка запроса с заголовками
 
 ```bash
-drpcclient http://localhost/api users.login '{"login": "user"}' -id=1 
+drpcclient request 1 http://localhost -headers='{"X-User-Token": "<guid>"}' -method=users.login -params='{"login": "user", "password": "admin"}'
+```
+
+* Отправка запроса и получение заголовков
+
+> -v - verbose
+
+```bash
+drpcclient request -v 1 http://localhost -headers='{"X-User-Token": "<guid>"}' -method=users.login -params='{"login": "user", "password": "admin"}'
+```
+
+* Генерация `curl` запроса
+
+```bash
+drpcclient curl 1 http://localhost -headers='{"X-User-Token": "<guid>"}' -method=users.login -params='{"login": "user", "password": "admin"}'
 ```
