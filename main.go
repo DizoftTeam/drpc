@@ -48,28 +48,17 @@ func main() {
 
 	args = spliceByIndex(0, args)
 
-	switch command {
-	case "request":
-		println("Run request command")
+	isVerbose := false
 
-		os.Exit(0)
+	findValueMap(func(v string) bool {
+		if strings.Contains(v, "-v") || strings.Contains(v, "-verbose") {
+			isVerbose = true
 
-		break
+			return true
+		}
 
-	case "curl":
-		println("Run curl command")
-
-		os.Exit(0)
-
-		break
-
-	default:
-		println("Unkkown command!\nTry request or curl!")
-
-		os.Exit(0)
-
-		break
-	}
+		return false
+	})
 
 	var url string
 
@@ -127,6 +116,10 @@ func main() {
 		return false
 	})
 
+	if params == "" {
+		params = "{}"
+	}
+
 	var headers string
 
 	findValueMap(func(v string) bool {
@@ -134,67 +127,115 @@ func main() {
 			pieces := strings.Split(v, "=")
 
 			if len(pieces) == 2 {
+				headers = pieces[1]
 
+				return true
 			}
 		}
 
 		return false
 	})
 
-	println("headers", headers)
+	if headers == "" {
+		headers = "{}"
+	}
 
-	var pParams interface{}
+	var pParams map[string]interface{}
 
 	if err := json.Unmarshal([]byte(params), &pParams); err != nil {
-		pParams = map[string]string{}
+		pParams = map[string]interface{}{}
 
 		log.Println("Cant understand params", params, err)
 	}
 
-	jsonRpc := map[string]interface{}{}
+	var pHeaders map[string]interface{}
 
-	jsonRpc["jsonrpc"] = jsonRpcVersion
-	jsonRpc["method"] = method
-	jsonRpc["params"] = pParams
+	if err := json.Unmarshal([]byte(headers), &pHeaders); err != nil {
+		pHeaders = map[string]interface{}{}
 
-	if id > 0 {
-		jsonRpc["id"] = id
+		log.Println("Cant understand headers", headers, err)
 	}
 
-	f := colorjson.NewFormatter()
-	f.Indent = 2
-	f.KeyColor = color.New(color.FgCyan)
-
-	fRequest, err := f.Marshal(jsonRpc)
-	request, _ := json.Marshal(jsonRpc)
-
-	if err != nil {
-		println(err.Error())
-		panic("Cant generate colored json")
-	}
-
-	println("--->")
-	println(string(fRequest))
-
-	response, _ := http.Post(url, "application/json", strings.NewReader(string(request)))
-
-	defer response.Body.Close()
-
-	println("<---")
-
-	if response.Header.Get("Content-Type") == "application/json" {
-		var s interface{}
-
-		if err = json.NewDecoder(response.Body).Decode(&s); err != nil {
-			println("JsonResponse could not be parsed", err.Error())
+	switch command {
+	case "request":
+		jsonRpc := map[string]interface{}{
+			"jsonrpc": jsonRpcVersion,
+			"method":  method,
+			"params":  pParams,
 		}
 
-		fr, _ := f.Marshal(s)
+		if id > 0 {
+			jsonRpc["id"] = id
+		}
 
-		println(string(fr))
-	} else {
-		body, _ := ioutil.ReadAll(response.Body)
+		f := colorjson.NewFormatter()
+		f.Indent = 2
+		f.KeyColor = color.New(color.FgCyan)
 
-		println(string(body))
+		coloredRequest, err := f.Marshal(jsonRpc)
+		coloredHeaders, err := f.Marshal(pHeaders)
+		request, _ := json.Marshal(jsonRpc)
+
+		if err != nil {
+			println(err.Error())
+			panic("Cant generate colored json")
+		}
+
+		println("--->")
+
+		if isVerbose == true {
+			println(string(coloredHeaders))
+			println("---")
+		}
+
+		println(string(coloredRequest))
+
+		httpClient := &http.Client{}
+		hRequest, err := http.NewRequest("POST", url, strings.NewReader(string(request)))
+
+		if err != nil {
+			panic("Cant create HttpClient!")
+		}
+
+		hRequest.Header.Add("Content-Type", "application/json")
+
+		for k, v := range pHeaders {
+			hRequest.Header.Add(k, v.(string))
+		}
+
+		response, _ := httpClient.Do(hRequest)
+
+		defer response.Body.Close()
+
+		println("<---")
+
+		// TODO: response headers
+
+		if response.Header.Get("Content-Type") == "application/json" {
+			var s interface{}
+
+			if err = json.NewDecoder(response.Body).Decode(&s); err != nil {
+				println("JsonResponse could not be parsed", err.Error())
+			}
+
+			fr, _ := f.Marshal(s)
+
+			println(string(fr))
+		} else {
+			body, _ := ioutil.ReadAll(response.Body)
+
+			println(string(body))
+		}
+
+		break
+
+	case "curl":
+		println("Run curl command")
+		println("Not supported yet")
+
+		break
+
+	default:
+		log.Fatalln("Unknown command!\nTry request or curl!")
 	}
 }
