@@ -1,0 +1,25 @@
+_notify: &notify
+  name: _override_name
+  url: http://api.gvozdika.dizoft.ru
+  method: _override_method
+  params: { }
+
+_base: &base
+  <<: *notify
+  id: 1
+
+requests:
+  # Авторизация
+  - <<: *base
+    name: login
+    method: v1.users.login
+    params:
+      login: test
+      password: test
+
+  # Выход из системы
+  - <<: *base
+    name: logout
+    method: v1.users.logout
+    params:
+      token: $token

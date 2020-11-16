@@ -2,15 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/TylerBrock/colorjson"
 	"github.com/fatih/color"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -20,6 +24,16 @@ const (
 var (
 	args []string // Массив аргументов программы
 )
+
+type config struct {
+	Requests []struct {
+		Name   string      `yaml:"name"`
+		URL    string      `yaml:"url"`
+		Method string      `yaml:"method"`
+		Params interface{} `yaml:"params"`
+		ID     int         `yaml:"id,omitempty"`
+	} `yaml:"requests"`
+}
 
 // Вырезает элемент из массива
 func spliceByIndex(index int, arr []string) []string {
@@ -41,7 +55,8 @@ func findValueMap(callback func(v string) bool) {
 	}
 }
 
-func main() {
+// Запуск CLI версии
+func runCli() {
 	args = os.Args[1:]
 
 	command := args[0]
@@ -203,15 +218,32 @@ func main() {
 			hRequest.Header.Add(k, v.(string))
 		}
 
+		start := time.Now()
 		response, _ := httpClient.Do(hRequest)
+		end := time.Now()
+		timeDiff := end.Sub(start)
 
-		defer response.Body.Close()
+		milliseconds := int(timeDiff / time.Millisecond)
 
 		println("<---")
 
-		// TODO: response headers
+		if response == nil {
+			log.Fatalln("Response is null. Server is down?")
+		}
 
-		if response.Header.Get("Content-Type") == "application/json" {
+		defer response.Body.Close()
+
+		if isVerbose == true {
+			fmt.Printf("Time: %dms\n\n", milliseconds)
+
+			for i, v := range response.Header {
+				fmt.Printf("[%s] %s\n", i, strings.Join(v, ","))
+			}
+
+			println("---")
+		}
+
+		if strings.Contains(response.Header.Get("Content-Type"), "application/json") {
 			var s interface{}
 
 			if err = json.NewDecoder(response.Body).Decode(&s); err != nil {
@@ -237,5 +269,45 @@ func main() {
 
 	default:
 		log.Fatalln("Unknown command!\nTry request or curl!")
+	}
+}
+
+// Запуск файловой версии
+func runCmd(cConfig config) {
+	args := os.Args[1:]
+	command := args[0]
+
+	if strings.Contains(command, "-") {
+		log.Fatalln("Wrong command name")
+	}
+
+	var commands []string
+
+	for _, v := range cConfig.Requests {
+		commands = append(commands, v.Name)
+	}
+}
+
+func main() {
+	pConfigFile := flag.String("file", "<none>", "Set file config")
+
+	flag.Parse()
+
+	if *pConfigFile != "<none>" {
+		data, err := ioutil.ReadFile(*pConfigFile)
+
+		if err != nil {
+			log.Fatalf("Config file %s not found", *pConfigFile)
+		}
+
+		cConfig := config{}
+
+		if err := yaml.Unmarshal(data, &cConfig); err != nil {
+			log.Fatalln("Yaml file has incorrect data. Error: ", err)
+		}
+
+		runCmd(cConfig)
+	} else {
+		runCli()
 	}
 }
