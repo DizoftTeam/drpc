@@ -1,5 +1,12 @@
 # DRpcClient
 
+![](https://img.shields.io/github/issues/DizoftTeam/drpc)
+![](https://img.shields.io/github/forks/DizoftTeam/drpc)
+![](https://img.shields.io/github/stars/DizoftTeam/drpc)
+![](https://img.shields.io/github/license/DizoftTeam/drpc)
+![](https://img.shields.io/aur/votes/drpc?label=AUR%20votes)
+![](https://img.shields.io/aur/version/drpc)
+
 Command line client for json rpc
 
 ## Installation
@@ -23,6 +30,57 @@ sudo ln -s /home/<user>/path/to/drpc /usr/local/bin/drpc
 ```
 
 ## Example
+
+### 1.3.0
+
+* Add file config support
+
+Example of config
+
+> Note: in this config we are using yaml override cause it usability
+
+```yaml
+_notify: &notify
+  name: _override_name
+  url: http://api.gvozdika.dizoft.ru/rpc
+  method: _override_method
+  params: { }
+  headers: { }
+
+_base: &base
+  <<: *notify
+  id: 1
+
+requests:
+  # Авторизация
+  - <<: *base
+    name: login
+    method: v1.users.login
+    params:
+      login: test
+      password: test
+
+  # Выход из системы
+  - <<: *base
+    name: logout
+    method: v1.users.logout
+    params:
+      token: $token # Require from cmd
+```
+
+Syntax is
+
+```bash
+drpc -file=DrpcFileConfig.yaml some_method_name [someParamName=someParamValue]
+```
+
+#### $token
+
+It means that you should provide this argument in command line!
+
+```bash
+drpc -file=drpc.yaml logout token=SomeTokenHere
+```
 
 ### 1.2.0
 

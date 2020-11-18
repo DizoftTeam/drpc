@@ -1,8 +1,9 @@
 _notify: &notify
   name: _override_name
-  url: http://api.gvozdika.dizoft.ru
+  url: http://api.gvozdika.dizoft.ru/rpc
   method: _override_method
   params: { }
+  headers: { }
 
 _base: &base
   <<: *notify
