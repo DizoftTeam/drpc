@@ -1,11 +1,11 @@
 # DRpcClient
 
-![](https://img.shields.io/github/issues/DizoftTeam/drpc)
-![](https://img.shields.io/github/forks/DizoftTeam/drpc)
-![](https://img.shields.io/github/stars/DizoftTeam/drpc)
-![](https://img.shields.io/github/license/DizoftTeam/drpc)
-![](https://img.shields.io/aur/votes/drpc?label=AUR%20votes)
-![](https://img.shields.io/aur/version/drpc)
+[![Issues](https://img.shields.io/github/issues/DizoftTeam/drpc)](https://github.com/DizoftTeam/drpc/issues)
+[![Forks](https://img.shields.io/github/forks/DizoftTeam/drpc)](https://github.com/DizoftTeam/drpc/network/members)
+[![Stars](https://img.shields.io/github/stars/DizoftTeam/drpc)](https://github.com/DizoftTeam/drpc/stargazers)
+[![License](https://img.shields.io/github/license/DizoftTeam/drpc)](https://github.com/DizoftTeam/drpc/blob/master/LICENSE)
+[![AUR Votes](https://img.shields.io/aur/version/drpc)](https://img.shields.io/aur/votes/drpc?label=AUR%20votes)
+[![AUR Version](https://img.shields.io/aur/version/drpc)](https://aur.archlinux.org/packages/drpc/)
 
 Command line client for json rpc
 
